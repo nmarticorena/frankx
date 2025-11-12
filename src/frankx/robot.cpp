@@ -5,7 +5,8 @@
 
 namespace frankx {
 
-Robot::Robot(std::string fci_ip, double dynamic_rel, bool repeat_on_error, bool stop_at_python_signal): franka::Robot(fci_ip), fci_ip(fci_ip), velocity_rel(dynamic_rel), acceleration_rel(dynamic_rel), jerk_rel(dynamic_rel), repeat_on_error(repeat_on_error), stop_at_python_signal(stop_at_python_signal) { }
+Robot::Robot(std::string fci_ip, double dynamic_rel, bool repeat_on_error, bool stop_at_python_signal)
+: franka::Robot(fci_ip, franka::RealtimeConfig::kIgnore), fci_ip(fci_ip), velocity_rel(dynamic_rel), acceleration_rel(dynamic_rel), jerk_rel(dynamic_rel), repeat_on_error(repeat_on_error), stop_at_python_signal(stop_at_python_signal) { }
 
 void Robot::setDefaultBehavior() {
     setCollisionBehavior(
@@ -170,47 +171,24 @@ bool Robot::move(const Affine& frame, WaypointMotion& motion, MotionData& data) 
     WaypointMotionGenerator<Robot> mg {this, frame, motion, data};
     mg.input_para.target_position[0] = 0.01;
 
-    try {
-        control(stateful<franka::CartesianPose>(mg), controller_mode);
-
-    } catch (franka::Exception exception) {
-        auto errors = readOnce().last_motion_errors;
-        if (repeat_on_error
-            // && (errors.cartesian_motion_generator_joint_acceleration_discontinuity
-            // || errors.cartesian_motion_generator_joint_velocity_discontinuity
-            // || errors.cartesian_motion_generator_velocity_discontinuity
-            // || errors.cartesian_motion_generator_acceleration_discontinuity)
-        ) {
-            std::cout << "[frankx robot] continue motion after exception: " << exception.what() << std::endl;
-            automaticErrorRecovery();
-
-            data.velocity_rel *= 0.5;
-            data.acceleration_rel *= 0.5;
-            data.jerk_rel *= 0.5;
-            mg.reset();
-
-            bool success {false};
-
-            try {
-                control(stateful<franka::CartesianPose>(mg), controller_mode);
-                success = true;
-
-            } catch (franka::Exception exception) {
-                std::cout << exception.what() << std::endl;
+    while(true){
+        try {
+            control(stateful<franka::CartesianPose>(mg), controller_mode);
+        } catch (franka::Exception exception) {
+            auto errors = readOnce().last_motion_errors;
+            if (repeat_on_error){
+                std::cout << "[frankx robot] continue motion after exception: " << exception.what() << std::endl;
+                automaticErrorRecovery();
+                mg.reset();
+                continue;
             }
-            data.velocity_rel *= 2;
-            data.acceleration_rel *= 2;
-            data.jerk_rel *= 2;
-
-            return success;
-
-        } else {
-            std::cout << exception.what() << std::endl;
+            std::cout <<exception.what() << std::endl;
+            return false;
         }
-
-        return false;
+        return true;
     }
-    return true;
+
+    
 }
 
 } // namepace frankx
