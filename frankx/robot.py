@@ -68,4 +68,8 @@ class Robot(_Robot):
         return p
 
     def get_gripper(self):
-        return _Gripper(self.fci_ip)
+        return _Gripper(self.fci_ip, 0.1)
+
+
+
+

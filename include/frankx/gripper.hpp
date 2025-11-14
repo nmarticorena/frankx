@@ -37,7 +37,7 @@ public:
 
     bool move(double width); // [m]
     bool move_unsafe(double width); // [m]
-    std::future<bool> moveAsync(double width); // [m]
+    std::future<bool>  moveAsync(double width); // [m]
 
     bool open();
     bool clamp();
