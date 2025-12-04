@@ -87,7 +87,8 @@ PYBIND11_MODULE(_frankx, m) {
     py::class_<PathMotion>(m, "PathMotion")
         .def(py::init<const std::vector<Waypoint>&>(), "waypoints"_a)
         .def(py::init<const std::vector<Affine>&, double>(), "waypoints"_a, "blend_max_distance"_a = 0.0)
-        .def_readonly("waypoints", &PathMotion::waypoints);
+        .def_readonly("waypoints", &PathMotion::waypoints)
+        .def("get_robot_state", &PathMotion::getRobotState);
 
     // py::class_<LinearMotion, PathMotion>(m, "LinearMotion")
     //     .def(py::init<const Affine&>(), "target"_a)
@@ -151,7 +152,7 @@ PYBIND11_MODULE(_frankx, m) {
         .def("get_robot_state", &ImpedanceMotion::getRobotState)
         .def("current_pose", &ImpedanceMotion::currentPose, "frame"_a = Affine());
 
-    py::class_<franka::Duration>(m, "Duration")
+    py::class_<franka::Duration>(m, "Duration", py::module_local())
         .def(py::init<>())
         .def(py::init<uint64_t>())
         .def("to_sec", &franka::Duration::toSec)
@@ -165,7 +166,7 @@ PYBIND11_MODULE(_frankx, m) {
         .def(py::self / uint64_t())
         .def(py::self /= uint64_t());
 
-    py::class_<franka::Errors>(m, "Errors")
+    py::class_<franka::Errors>(m, "Errors", py::module_local())
         .def(py::init<>())
         .def_property_readonly("joint_position_limits_violation", [](const franka::Errors& e) { return e.joint_position_limits_violation; })
         .def_property_readonly("cartesian_position_limits_violation", [](const franka::Errors& e) { return e.cartesian_position_limits_violation; })
@@ -220,7 +221,7 @@ PYBIND11_MODULE(_frankx, m) {
 
     // py::class_<franka::Model>(m, "Model");
 
-    py::enum_<franka::RobotMode>(m, "RobotMode")
+    py::enum_<franka::RobotMode>(m, "RobotMode", py::module_local())
         .value("Other", franka::RobotMode::kOther)
         .value("Idle", franka::RobotMode::kIdle)
         .value("Move", franka::RobotMode::kMove)
@@ -230,12 +231,12 @@ PYBIND11_MODULE(_frankx, m) {
         .value("AutomaticErrorRecovery", franka::RobotMode::kAutomaticErrorRecovery)
         .export_values();
 
-    py::enum_<franka::ControllerMode>(m, "ControllerMode")
+    py::enum_<franka::ControllerMode>(m, "ControllerMode", py::module_local())
         .value("JointImpedance", franka::ControllerMode::kJointImpedance)
         .value("CartesianImpedance", franka::ControllerMode::kCartesianImpedance)
         .export_values();
 
-    py::class_<franka::RobotState>(m, "RobotState")
+    py::class_<franka::RobotState>(m, "RobotState", py::module_local())
         .def_readonly("O_T_EE", &franka::RobotState::O_T_EE)
         .def_readonly("O_T_EE_d", &franka::RobotState::O_T_EE_d)
         .def_readonly("F_T_EE", &franka::RobotState::F_T_EE)
@@ -326,16 +327,16 @@ PYBIND11_MODULE(_frankx, m) {
         .def("move", (bool (Robot::*)(JointMotion&, MotionData&)) &Robot::move, py::call_guard<py::gil_scoped_release>())
         .def("move", (bool (Robot::*)(JointWaypointMotion&)) &Robot::move, py::call_guard<py::gil_scoped_release>())
         .def("move", (bool (Robot::*)(JointWaypointMotion&, MotionData&)) &Robot::move, py::call_guard<py::gil_scoped_release>())
-        .def("move", (bool (Robot::*)(PathMotion)) &Robot::move, py::call_guard<py::gil_scoped_release>())
-        .def("move", (bool (Robot::*)(PathMotion, MotionData&)) &Robot::move, py::call_guard<py::gil_scoped_release>())
-        .def("move", (bool (Robot::*)(const Affine&, PathMotion)) &Robot::move, py::call_guard<py::gil_scoped_release>())
-        .def("move", (bool (Robot::*)(const Affine&, PathMotion, MotionData&)) &Robot::move, py::call_guard<py::gil_scoped_release>())
+        .def("move", (bool (Robot::*)(PathMotion&)) &Robot::move, py::call_guard<py::gil_scoped_release>())
+        .def("move", (bool (Robot::*)(PathMotion&, MotionData&)) &Robot::move, py::call_guard<py::gil_scoped_release>())
+        .def("move", (bool (Robot::*)(const Affine&, PathMotion&)) &Robot::move, py::call_guard<py::gil_scoped_release>())
+        .def("move", (bool (Robot::*)(const Affine&, PathMotion&, MotionData&)) &Robot::move, py::call_guard<py::gil_scoped_release>())
         .def("move", (bool (Robot::*)(WaypointMotion&)) &Robot::move, py::call_guard<py::gil_scoped_release>())
         .def("move", (bool (Robot::*)(WaypointMotion&, MotionData&)) &Robot::move, py::call_guard<py::gil_scoped_release>())
         .def("move", (bool (Robot::*)(const Affine&, WaypointMotion&)) &Robot::move, py::call_guard<py::gil_scoped_release>())
         .def("move", (bool (Robot::*)(const Affine&, WaypointMotion&, MotionData&)) &Robot::move, py::call_guard<py::gil_scoped_release>(), "frame"_a, "waypoint_motion"_a, "motion_data"_a);
 
-    py::class_<franka::GripperState>(m, "GripperState")
+    py::class_<franka::GripperState>(m, "GripperState", py::module_local())
         .def_readonly("width", &franka::GripperState::width)
         .def_readonly("max_width", &franka::GripperState::max_width)
         .def_readonly("is_grasped", &franka::GripperState::is_grasped)

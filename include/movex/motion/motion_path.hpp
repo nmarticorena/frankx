@@ -16,6 +16,7 @@ struct PathMotion {
     using Affine = affx::Affine;
 
     std::vector<Waypoint> waypoints;
+    franka::RobotState current_state;
 
     explicit PathMotion(const std::vector<Waypoint>& waypoints): waypoints(waypoints) { }
     explicit PathMotion(const std::vector<Affine>& waypoints, double blend_max_distance = 0.0) {
@@ -23,6 +24,14 @@ struct PathMotion {
         for (size_t i = 0; i < waypoints.size(); i += 1) {
             this->waypoints[i] = Waypoint(waypoints[i], std::nullopt, blend_max_distance);
         }
+    }
+
+    void setRobotState(const franka::RobotState& robot_state) {
+        current_state = robot_state;
+    }
+
+    franka::RobotState getRobotState() {
+        return current_state;
     }
 };
 

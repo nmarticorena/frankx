@@ -9,6 +9,8 @@
 #include <movex/path/path.hpp>
 #include <movex/path/time_parametrization.hpp>
 #include <movex/path/trajectory.hpp>
+// stdout
+// #include <iostream>
 
 
 namespace frankx {
@@ -25,12 +27,13 @@ struct PathMotionGenerator: public MotionGenerator {
 
     RobotType* robot;
     Affine frame;
-    PathMotion motion;
+    PathMotion& motion;
     MotionData& data;
 
-    explicit PathMotionGenerator(RobotType* robot, const Affine& frame, PathMotion motion, MotionData& data): robot(robot), frame(frame), motion(motion), data(data) {
+    explicit PathMotionGenerator(RobotType* robot, const Affine& frame, PathMotion& motion, MotionData& data): robot(robot), frame(frame), motion(motion), data(data) {
         // Insert current pose into beginning of path
         auto initial_state = robot->readOnce();
+        motion.setRobotState(initial_state);
         franka::CartesianPose initial_cartesian_pose(initial_state.O_T_EE_c, initial_state.elbow_c);
         Affine initial_pose(initial_cartesian_pose.O_T_EE);
 
@@ -49,6 +52,9 @@ struct PathMotionGenerator: public MotionGenerator {
 
     franka::CartesianPose operator()(const franka::RobotState& robot_state, franka::Duration period) {
         time += period.toSec();
+
+        motion.setRobotState(robot_state);
+        // std::cout << "motion.current_state: " << robot_state.q[0] << robot_state.q[1] << robot_state.q[2] << robot_state.q[3] << robot_state.q[4] << robot_state.q[5] << robot_state.q[6] << std::endl;
 
 #ifdef WITH_PYTHON
         if (robot->stop_at_python_signal && Py_IsInitialized() && PyErr_CheckSignals() == -1) {

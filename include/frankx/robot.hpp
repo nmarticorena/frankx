@@ -93,10 +93,10 @@ public:
     bool move(JointWaypointMotion& motion);
     bool move(JointWaypointMotion& motion, MotionData& data);
 
-    bool move(PathMotion motion);
-    bool move(PathMotion motion, MotionData& data);
-    bool move(const Affine& frame, PathMotion motion);
-    bool move(const Affine& frame, PathMotion motion, MotionData& data);
+    bool move(PathMotion& motion);
+    bool move(PathMotion& motion, MotionData& data);
+    bool move(const Affine& frame, PathMotion& motion);
+    bool move(const Affine& frame, PathMotion& motion, MotionData& data);
 
     bool move(WaypointMotion& motion);
     bool move(WaypointMotion& motion, MotionData& data);
