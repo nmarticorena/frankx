@@ -5,8 +5,22 @@ from threading import Thread
 from multiprocessing import Process, Event, Value
 from _frankx import Gripper as _Gripper
 from _frankx import CommandException, NetworkException
-from robot_io.utils.utils import timeit
 
+def timeit(method):
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+
+        if 'log_time' in kw:
+            name = kw.get('log_name', method.__name__.upper())
+            kw['log_time'][name] = int((te - ts) * 1000)
+        else:
+            print('%r  %2.2f ms' % \
+                  (method.__name__, (te - ts) * 1000))
+        return result
+
+    return timed
 log = logging.getLogger(__name__)
 
 class GripperState(Enum):
@@ -16,7 +30,7 @@ class GripperState(Enum):
 
 
 class Gripper:
-    def __init__(self, fci_ip, speed, force, timeout, opening_threshold, closing_threshold):
+    def __init__(self, fci_ip, speed=0.04, force=20, timeout= 5, opening_threshold= 0.05, closing_threshold = 0.01):
         self._width = Value('d', -1)
         self._open_gripper_event = Event()
         self._close_gripper_event = Event()
