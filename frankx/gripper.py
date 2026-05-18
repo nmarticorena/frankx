@@ -43,6 +43,9 @@ class Gripper:
         # self.prev_width = self.read_once().width
         # self.results = [None]
 
+    def home(self):
+        self._gripper.home()
+
     def width(self):
         return self._width.value
 
@@ -98,9 +101,13 @@ class GripperProcess(Process):
         Process.__init__(self)
         self.daemon = True
 
+    def home(self):
+        self._gripper.homing()
+
     def initialize(self):
         del self._gripper
         self._gripper = _Gripper(self.fci_ip, self.gripper_speed, self.gripper_force)
+
         self._width.value = self._gripper.read_once().width
         self.gripper_state = GripperState.INITIALIZED
 
@@ -111,15 +118,22 @@ class GripperProcess(Process):
             except NetworkException:
                 log.warning("libfranka: UDP receive: Timeout. Could not read gripper width. Restarting Gripper")
                 self.initialize()
+            # print("FRANKX: Gripper width: ", self._width.value)
+            # print(self._open_gripper_event.is_set(), self._close_gripper_event.is_set())
             if self._close_gripper_event.is_set():
-                if self.gripper_state != GripperState.CLOSED and (self.gripper_thread is None or (self.gripper_thread is not None and not self.gripper_thread.is_alive())):
-                    self.gripper_thread = self.move_async_grasp(0)
+                if (self.gripper_thread is None or (self.gripper_thread is not None and not self.gripper_thread.is_alive())):
+                    self.gripper_thread = self.move_async(0)
                     self.gripper_state = GripperState.CLOSED
                 self._close_gripper_event.clear()
             elif self._open_gripper_event.is_set():
-                if self.gripper_state != GripperState.OPEN and (self.gripper_thread is None or (self.gripper_thread is not None and not self.gripper_thread.is_alive())):
-                    self.gripper_thread = self.move_async(0.085)
-                    self.gripper_state = GripperState.OPEN
+                try:
+                    self._gripper.stop()
+                except Exception as e:
+                    print(e)
+                    print("FRANKX: Could not stop gripper. Restarting Gripper")
+
+                self.gripper_thread = self.move_async(0.08)
+                self.gripper_state = GripperState.OPEN
                 self._open_gripper_event.clear()
             time.sleep(0.001)
 

@@ -26,6 +26,8 @@ public:
     //! Connects to a gripper at the given FCI IP address.
     explicit Gripper(const std::string& fci_ip, double speed = 0.04, double force = 20.0);
 
+    bool home();
+
     double gripper_force {20.0}; // [N]
     double gripper_speed {0.04}; // [m/s]
     bool has_error {false};
